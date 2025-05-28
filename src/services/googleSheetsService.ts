@@ -2,20 +2,29 @@ import { google } from "googleapis";
 import * as fs from "fs";
 import * as path from "path";
 import { JWT } from "google-auth-library";
+import dotenv from "dotenv";
 
-// Đọc và cấu hình thông tin xác thực từ file credentials.json
-const keyPath = path.join(__dirname, "..", "credentials.json"); // Đảm bảo đường dẫn đúng
+dotenv.config();
+
+// Dùng biến môi trường để load credentials
+const keyPath = path.resolve(
+  process.env.GOOGLE_CREDENTIALS_PATH || ".secret/credentials.json"
+);
+
+if (!fs.existsSync(keyPath)) {
+  throw new Error(`Không tìm thấy file credentials tại: ${keyPath}`);
+}
+
 const keys = JSON.parse(fs.readFileSync(keyPath, "utf-8"));
 
-// Xác thực với Google Sheets API
+// Xác thực
 const auth = new JWT({
   email: keys.client_email,
   key: keys.private_key,
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"], // Quyền truy cập Sheets
-  subject: keys.client_email, // Dùng tài khoản dịch vụ này
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  subject: keys.client_email,
 });
 
-// Cấu hình Google Sheets API
 const sheets = google.sheets({ version: "v4", auth });
 
 // Lấy dữ liệu từ bảng tính Google Sheets (thiết bị mượn)
